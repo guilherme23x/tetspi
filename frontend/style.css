@@ -1,0 +1,100 @@
+:root {
+  /* Paleta Monocromática com Preto como Primário */
+  --primary: 0 0% 15%; /* Preto/Grafite */
+  --primary-rgb: 38 38 38;
+  --background: 0 0% 100%;
+  --card: 0 0% 100%;
+  --foreground: 0 0% 8%;
+  --muted: 0 0% 95%;
+  --muted-foreground: 0 0% 45%;
+  --ring: 0 0% 15%;
+  --radius: 0.75rem;
+}
+body {
+  font-family: "Inter", sans-serif;
+  /* Novo fundo suave com gradiente */
+  background: linear-gradient(135deg, #f0f4f8 0%, #e9edf1 100%);
+  min-height: 100vh;
+}
+.page {
+  display: none;
+}
+.page.active {
+  display: block;
+  animation: fadeIn 0.5s ease-out;
+}
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Classes Shadcn/UI adaptadas */
+.input-shadcn {
+  @apply flex h-11 w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm text-gray-800 placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--primary-rgb))] focus-visible:ring-offset-2 transition-all duration-300 shadow-sm;
+}
+.btn-shadcn {
+  @apply inline-flex items-center justify-center whitespace-nowrap rounded-lg text-sm font-semibold transition-all duration-300 h-10 px-5 py-2;
+}
+.btn-primary-shadcn {
+  @apply bg-primary text-white hover:bg-gray-800 shadow-md hover:shadow-lg;
+}
+.btn-secondary-shadcn {
+  @apply bg-muted text-gray-700 hover:bg-gray-200 shadow-sm hover:text-primary;
+}
+.card-shadcn {
+  /* Aumentado o padding para p-6 e espaçamento interno */
+  @apply rounded-xl border border-gray-200 bg-white shadow-xl transition-shadow duration-300 ease-in-out hover:shadow-2xl;
+}
+.badge-shadcn {
+  @apply inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold;
+}
+.badge-success {
+  @apply bg-green-500/10 text-green-700 border border-green-500/20;
+}
+.badge-muted {
+  @apply bg-gray-100 text-gray-700 border border-gray-200;
+}
+.mentor-card-avatar {
+  object-fit: cover;
+  transition: transform 0.3s ease-in-out;
+}
+.mentor-card-avatar:hover {
+  transform: scale(1.05);
+}
+/* Estilos específicos corrigidos */
+.day-number.bg-primary,
+.time-slot.bg-primary {
+  @apply text-white !important;
+}
+.day-number.hover\\:text-primary:hover,
+.time-slot.hover\\:text-primary:hover {
+  color: hsl(var(--primary)) !important;
+}
+
+/* Novo Container Geral e Efeito Blur */
+.main-container-wrapper {
+  background-color: rgba(255, 255, 255, 0.9); /* Fundo branco transparente */
+  border-radius: 2rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  min-height: calc(100vh - 4rem); /* Altura mínima para o wrapper */
+  margin: 2rem auto;
+  padding: 2rem;
+  backdrop-filter: blur(8px); /* Efeito de blur no fundo */
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.navbar {
+  /* Adiciona o blur à navegação */
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.error-message-box {
+  @apply bg-red-50 border-2 border-red-300 text-red-700 p-4 rounded-lg text-left shadow-lg;
+}
