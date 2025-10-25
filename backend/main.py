@@ -3,6 +3,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from supabase import create_client, Client
 from pydantic import BaseModel
 import os
+from dotenv import load_dotenv  # Importar
+
+load_dotenv() # Carregar variáveis do .env
 
 # Configuração do Supabase (Lê variáveis do ambiente Vercel)
 SUPABASE_URL = os.environ.get("SUPABASE_URL")

@@ -1,4 +1,4 @@
-const API_BASE_URL = "/api";
+const API_BASE_URL = "http://127.0.0.1:8000/api";
 
 const PAGES = [
   "page-home",
@@ -7,6 +7,7 @@ const PAGES = [
   "page-payment",
   "page-confirmation",
   "page-history",
+  "page-session",
 ];
 let currentMentor = {};
 // Definido para uma data e hora inicial que será selecionada por padrão
@@ -19,7 +20,7 @@ function showApiError(containerId) {
 
   container.classList.remove("hidden");
   container.innerHTML = `
-                <div class="error-message-box">
+                <div class="error-message-box p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
                     <h5 class="font-bold mb-2">Erro de Conexão com o Backend (Python/Supabase)</h5>
                     <p class="text-sm">O frontend não conseguiu se conectar ao servidor da API em <code>${API_BASE_URL}</code>.</p>
                     <p class="text-sm mt-1"><strong>Verifique:</strong> O servidor Python (FastAPI) está rodando (<code>uvicorn main:app --reload</code>)?</p>
@@ -39,10 +40,11 @@ function switchPage(pageId) {
   }
 }
 
-// Função para renderizar os cards de mentores
+// Função para renderizar os cards de mentores (MODIFICADO para o layout MentorLink)
 function displayMentors(mentors, container, isFeatured = false) {
   container.innerHTML = "";
-  const displayMentors = isFeatured ? mentors.slice(0, 3) : mentors;
+  // Não filtra mais por featured, apenas exibe a lista completa na página de busca
+  const displayMentors = mentors;
 
   if (mentors.length === 0 && !isFeatured) {
     document.getElementById("no-results-message").style.display = "block";
@@ -50,6 +52,9 @@ function displayMentors(mentors, container, isFeatured = false) {
   } else if (!isFeatured) {
     document.getElementById("no-results-message").style.display = "none";
   }
+
+  // Como removemos a seção de Destaque da Home, esta função é usada primariamente para a página de busca.
+  if (isFeatured) return; // Se for para destaque, não exibe nada (para não quebrar)
 
   displayMentors.forEach((mentor) => {
     const initials = mentor.name
@@ -59,45 +64,36 @@ function displayMentors(mentors, container, isFeatured = false) {
       .substring(0, 2);
 
     const cardHtml = `
-            <div class="card-shadcn  p-6 space-y-4 flex flex-col justify-between cursor-pointer hover:shadow-md transition-all duration-300" data-mentor-id="${
-              mentor.id
-            }">
-                <div class="space-y-3">
-                    <div class="flex items-center space-x-4">
-                        <img src="${
-                          mentor.image_url
-                        }" onerror="this.onerror=null; this.src='https://placehold.co/56x56/f0f9ff/0f172a?text=${initials}';" alt="Avatar de ${
-      mentor.name
-    }" class="h-14 w-14 shrink-0 rounded-full mentor-card-avatar" />
-                        <div>
-                            <h4 class="font-bold text-gray-800 text-xl">
-                                ${mentor.name} 
-                            </h4>
-                            <p class="text-sm text-muted-foreground">${
-                              mentor.subject
-                            }</p>
-                        </div>
-                    </div>
-                    <div class="pt-2">
-                         <div class="flex items-center space-x-2">
-                            <span class="text-lg font-extrabold text-primary">R$ ${mentor.price.toFixed(
-                              2
-                            )}/h</span>
-                            ${
-                              mentor.verified
-                                ? '<span class="badge-shadcn badge-success ml-2">VERIFICADO</span>'
-                                : ""
-                            }
-                        </div>
-                        <p class="text-sm text-muted-foreground mt-1">Avaliação: ⭐ ${
-                          mentor.rating
-                        }/5</p>
-                    </div>
+            <div class="mentorlink-card cursor-pointer" data-mentor-id="${mentor.id
+      }">
+                <div class="mentorlink-card-image" style="background-image: url('${mentor.image_url
+      }')">
+                    <span class="mentorlink-price-tag">R$ ${mentor.price.toFixed(
+        2
+      )}/h</span>
                 </div>
-                
-                <button class="btn-shadcn btn-primary-shadcn w-full mt-4 h-11" data-mentor-id="${
-                  mentor.id
-                }">Ver Perfil</button>
+                <div class="mentorlink-card-content p-4 relative">
+                    <img src="${mentor.image_url
+      }" onerror="this.onerror=null; this.src='https://placehold.co/70x70/E8634E/FFFFFF?text=${initials}';" alt="Avatar de ${mentor.name
+      }" class="mentorlink-avatar absolute" />
+                    <h4 class="font-bold text-gray-900 text-lg mt-8">
+                        ${mentor.name}
+                    </h4>
+                    <p class="text-sm text-gray-500">${mentor.subject}</p>
+                    <div class="flex items-center text-sm text-gray-500 mt-2 justify-between">
+                        <span class="flex items-center text-sm">
+                            <span class="text-yellow-500 mr-1">⭐</span>
+                            <span>${mentor.rating} (${mentor.rating * 300
+      } avaliações)</span>
+                        </span>
+                        ${mentor.verified
+        ? '<span class="badge-shadcn badge-success-new">VERIFICADO</span>'
+        : ""
+      }
+                    </div>
+                    <button class="btn-shadcn btn-primary-shadcn w-full mt-4 h-9 text-sm" data-mentor-id="${mentor.id
+      }">Ver Perfil</button>
+                </div>
             </div>
           `;
     container.insertAdjacentHTML("beforeend", cardHtml);
@@ -145,9 +141,9 @@ function renderCalendar() {
 
   const header = `
             <div class="calendar-header flex justify-between items-center font-semibold mb-3 text-gray-800">
-                <button class="p-1 rounded-md hover:bg-white transition-colors text-sm">←</button>
+                <button class="p-1 rounded-md hover:bg-gray-100 transition-colors text-lg text-gray-600">←</button>
                 <span class="text-base font-bold">${monthName}</span>
-                <button class="p-1 rounded-md hover:bg-white transition-colors text-sm">→</button>
+                <button class="p-1 rounded-md hover:bg-gray-100 transition-colors text-lg text-gray-600">→</button>
             </div>
         `;
 
@@ -219,7 +215,7 @@ function renderCalendar() {
   widget.appendChild(grid);
 }
 
-// Carrega o perfil do mentor
+// Carrega o perfil do mentor (MODIFICADO para o layout MentorLink)
 async function loadProfile(mentorId) {
   try {
     const response = await fetch(`${API_BASE_URL}/mentors/${mentorId}`);
@@ -235,47 +231,50 @@ async function loadProfile(mentorId) {
 
     document.getElementById("profile-details-area").innerHTML = `
                 <div class="card-shadcn p-8 space-y-6">
-                    <div class="flex items-center space-x-6 border-b pb-6">
-                        <img src="${
-                          mentor.image_url
-                        }" onerror="this.onerror=null; this.src='https://placehold.co/96x96/f0f9ff/0f172a?text=${initials}';" alt="Avatar de ${
-      mentor.name
-    }" class="h-24 w-24 shrink-0 rounded-full mentor-card-avatar" />
+                    <div class="flex items-start space-x-6 border-b pb-6">
+                        <img src="${mentor.image_url
+      }" onerror="this.onerror=null; this.src='https://placehold.co/96x96/E8634E/FFFFFF?text=${initials}';" alt="Avatar de ${mentor.name
+      }" class="h-28 w-28 shrink-0 rounded-xl mentor-card-avatar border-4 border-gray-100 object-cover" />
                         <div>
-                            <h2 class="text-3xl font-bold text-gray-800">${
-                              mentor.name
-                            } ${
-      mentor.verified
-        ? '<span class="badge-shadcn badge-success ml-2">✓</span>'
+                            <h2 class="text-3xl font-bold text-gray-900">${mentor.name
+      } ${mentor.verified
+        ? '<span class="badge-shadcn badge-success-new ml-2">VERIFICADO</span>'
         : ""
-    }</h2>
-                            <p class="text-lg text-muted-foreground mt-1">${
-                              mentor.subject
-                            } - Especialista</p>
-                            <p class="mt-2 text-xl font-extrabold text-primary">R$ ${mentor.price.toFixed(
-                              2
-                            )} / hora</p>
-                            <p class="text-lg font-semibold text-gray-700">⭐ ${
-                              mentor.rating
-                            }/5</p>
+      }</h2>
+                            <p class="text-lg text-primary font-semibold mt-1">${mentor.subject
+      } - Especialista</p>
+                            <div class="flex items-center text-sm mt-2 text-gray-600">
+                                <p class="text-lg font-semibold text-gray-700">⭐ ${mentor.rating
+      }/5 (${mentor.rating * 300} avaliações)</p>
+                            </div>
                         </div>
-                    </div>
-                    
-                    <div>
-                        <h3 class="text-2xl font-bold mb-3 text-gray-800">Sobre o Mentor</h3>
-                        <p class="text-muted-foreground text-base leading-relaxed">${
-                          mentor.bio
-                        }</p>
                     </div>
 
                     <div>
-                        <h3 class="text-2xl font-bold mb-3 text-gray-800">Certificados</h3>
-                        <ul class="space-y-3">
-                            <li class="flex items-center text-gray-700 text-base"><svg class="mr-3 h-5 w-5 text-primary" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>Certificado ${
-                              mentor.subject
-                            } Avançado</li>
-                            <li class="flex items-center text-gray-700 text-base"><svg class="mr-3 h-5 w-5 text-primary" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>Mestrado em Computação</li>
-                        </ul>
+                        <h3 class="text-2xl font-bold mb-3 text-gray-900">Sobre</h3>
+                        <p class="text-muted-foreground text-base leading-relaxed">${mentor.bio
+      }</p>
+                    </div>
+
+                    <div>
+                        <h3 class="text-2xl font-bold mb-4 text-gray-900">Avaliações</h3>
+                        <!-- Avaliações Simuladas -->
+                        <div class="review-item border-b pb-4 mb-4">
+                            <div class="review-avatar">J</div>
+                            <div class="review-content">
+                                <p class="review-name">João Pedro <span class="review-date">Há 2 semanas</span></p>
+                                <p class="review-rating text-yellow-500">★★★★★</p>
+                                <p class="review-text">Mentoria excepcional! A Maria tem um conhecimento profundo e sabe explicar conceitos complexos de forma clara.</p>
+                            </div>
+                        </div>
+                        <div class="review-item border-b pb-4 mb-4">
+                            <div class="review-avatar">A</div>
+                            <div class="review-content">
+                                <p class="review-name">Ana Carolina <span class="review-date">Há 1 mês</span></p>
+                                <p class="review-rating text-yellow-500">★★★★★</p>
+                                <p class="review-text">Melhor investimento que fiz na minha carreira. Recomendo 100%!</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             `;
@@ -297,11 +296,9 @@ function setupScheduleListeners(mentor) {
   const scheduleButton = document.getElementById("schedule-and-pay-button");
 
   timeSlotsContainer.innerHTML = "";
-  const availableTimes = ["10:00", "11:00", "14:00", "16:30", "18:00", "19:30"];
+  const availableTimes = ["09:00", "10:00", "11:00", "14:00", "15:00", "16:00"];
 
-  scheduleButton.textContent = `Agendar e Pagar (R$ ${mentor.price.toFixed(
-    2
-  )})`;
+  scheduleButton.textContent = `Agendar Sessão`;
   scheduleButton.disabled = false;
 
   let initialSelectedTime = "11:00";
@@ -309,7 +306,7 @@ function setupScheduleListeners(mentor) {
   availableTimes.forEach((time) => {
     const slot = document.createElement("button");
     slot.className =
-      "btn-shadcn btn-secondary-shadcn h-9 px-4 py-1 text-sm hover:bg-primary/10 hover:text-primary transition-colors duration-200";
+      "btn-shadcn btn-secondary-new h-9 px-4 py-1 text-sm transition-colors duration-200";
     slot.textContent = time;
     slot.dataset.time = time;
 
@@ -318,40 +315,25 @@ function setupScheduleListeners(mentor) {
       selectedDateTime.date === "2025-11-05" &&
       time === initialSelectedTime
     ) {
-      slot.classList.remove(
-        "btn-secondary-shadcn",
-        "hover:bg-primary/10",
-        "hover:text-primary"
-      );
-      slot.classList.add(
-        "bg-primary",
-        "text-white",
-        "hover:bg-gray-800",
-        "shadow-md"
-      );
+      slot.classList.remove("btn-secondary-new");
+      slot.classList.add("bg-primary", "text-white", "hover:bg-primary-dark");
       selectedDateTime.time = initialSelectedTime;
     }
 
     slot.addEventListener("click", (e) => {
       document.querySelectorAll(".available-times .btn-shadcn").forEach((s) => {
-        s.classList.add(
-          "btn-secondary-shadcn",
-          "hover:bg-primary/10",
-          "hover:text-primary"
-        );
+        s.classList.add("btn-secondary-new");
         s.classList.remove(
           "bg-primary",
           "text-white",
-          "hover:bg-gray-800",
-          "shadow-md"
+          "hover:bg-primary-dark"
         );
       });
-      e.target.classList.remove("btn-secondary-shadcn");
+      e.target.classList.remove("btn-secondary-new");
       e.target.classList.add(
         "bg-primary",
         "text-white",
-        "hover:bg-gray-800",
-        "shadow-md"
+        "hover:bg-primary-dark"
       );
       selectedDateTime.time = e.target.dataset.time;
       scheduleButton.disabled = false;
@@ -362,9 +344,10 @@ function setupScheduleListeners(mentor) {
   scheduleButton.addEventListener("click", () => {
     if (selectedDateTime.date && selectedDateTime.time) {
       document.getElementById("payment-mentor-name").textContent = mentor.name;
-      document.getElementById(
-        "payment-date-time"
-      ).textContent = `${selectedDateTime.date} às ${selectedDateTime.time}`;
+      document.getElementById("payment-time").textContent =
+        selectedDateTime.time;
+      document.getElementById("payment-date-time").textContent =
+        selectedDateTime.date;
       document.getElementById(
         "payment-price-value"
       ).textContent = `R$ ${mentor.price.toFixed(2)}`;
@@ -425,23 +408,24 @@ function renderHistory() {
     const isCompleted = session.status === "completed";
     const isCancelled = session.status === "cancelled";
 
-    let borderClass = "border-yellow-500";
+    let borderClass = "border-primary";
     let actionContent = "";
     let statusTag = "";
 
     if (isUpcoming) {
-      borderClass = "border-yellow-500";
+      borderClass = "border-primary";
       actionContent = `
-                        <button class="btn-shadcn btn-primary-shadcn access-room">Acessar Sala</button>
-                        <button class="btn-shadcn text-red-600 hover:bg-red-50 bg-white border border-red-600 cancel-session" data-id="${session.id}">Cancelar</button>
+                        <button class="btn-shadcn btn-primary-shadcn access-room h-9 px-4 text-sm shrink-0">Acessar Sala</button>
+                        <button class="text-sm font-medium text-red-500 hover:text-red-700 transition-colors cancel-session h-9 px-4 shrink-0" data-id="${session.id}">Cancelar</button>
                     `;
+      statusTag = `<span class="badge-shadcn bg-primary text-white text-xs">AGENDADA</span>`;
     } else if (isCompleted) {
       borderClass = "border-green-500";
-      statusTag = `<span class="badge-shadcn badge-success">Concluída</span>`;
+      statusTag = `<span class="badge-shadcn badge-success">CONCLUÍDA</span>`;
       actionContent = `<button class="text-sm font-medium text-primary hover:underline transition-colors">Deixar Avaliação</button>`;
     } else if (isCancelled) {
       borderClass = "border-gray-400";
-      statusTag = `<span class="badge-shadcn bg-red-100 text-red-600 border border-red-200">Cancelada</span>`;
+      statusTag = `<span class="badge-shadcn bg-gray-100 text-gray-600 border border-gray-200">CANCELADA</span>`;
       actionContent = `<span class="text-sm text-muted-foreground">Agendamento Cancelado</span>`;
     }
 
@@ -449,28 +433,25 @@ function renderHistory() {
     card.className = `card-shadcn p-5 flex flex-col md:flex-row justify-between items-start md:items-center border-l-4 ${borderClass} shadow-md`;
     card.innerHTML = `
                     <div class="flex-1">
-                        <h4 class="font-semibold text-lg text-gray-800">Aula com ${
-                          session.mentorName
-                        }</h4>
-                        <p class="text-sm text-muted-foreground mt-1">${
-                          session.subject
-                        } | ${session.date} | ${
-      session.time
-    } | R$ ${session.price.toFixed(2)}</p>
+                        <h4 class="font-semibold text-lg text-gray-800">Aula com ${session.mentorName
+      }</h4>
+                        <p class="text-sm text-muted-foreground mt-1">${session.subject
+      } | ${session.date} | ${session.time
+      } | R$ ${session.price.toFixed(2)}</p>
                     </div>
                     <div class="flex space-x-3 items-center mt-4 md:mt-0">
                         ${statusTag}
-                        ${actionContent}
+                        <div class="flex space-x-3">${actionContent}</div>
                     </div>
                 `;
     historyContainer.appendChild(card);
   });
 
-  // O botão "Acessar Sala" agora não faz nada (a página de sessão foi removida para simplificação)
+  // O botão "Acessar Sala" agora leva à simulação da página de sessão.
   document.querySelectorAll(".access-room").forEach((btn) => {
-    btn.addEventListener("click", () =>
-      alert("Simulação: Sala de aula acessada!")
-    );
+    btn.addEventListener("click", (e) => {
+      switchPage("page-session");
+    });
   });
 
   document.querySelectorAll(".cancel-session").forEach((btn) => {
@@ -518,6 +499,15 @@ if (!localStorage.getItem("tutoriSessions")) {
         price: 120.0,
         status: "completed",
       },
+      {
+        id: 3,
+        mentorName: "Carlos Eduardo",
+        subject: "Liderança Tech",
+        date: "2025-09-01",
+        time: "16:00",
+        price: 200.0,
+        status: "cancelled",
+      },
     ])
   );
 }
@@ -543,8 +533,19 @@ document.addEventListener("DOMContentLoaded", async () => {
     fetchMentors("", false, 300);
     switchPage("page-search");
   });
+
+  // O botão 'view-all-mentors-bottom' foi removido do HTML.
+  /*
   document
-    .getElementById("cta-mentor-search")
+    .getElementById("view-all-mentors-bottom")
+    .addEventListener("click", (e) => {
+      e.preventDefault();
+      fetchMentors("", false, 300);
+      switchPage("page-search");
+    });
+  */
+  document
+    .getElementById("header-signup-button")
     .addEventListener("click", (e) => {
       e.preventDefault();
       fetchMentors("", false, 300);
@@ -554,7 +555,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   // --- Lógica de Busca e Filtro ---
   const priceRangeInput = document.getElementById("price-range-input");
   const priceMaxDisplay = document.getElementById("price-max-display");
-  const applyFiltersButton = document.getElementById("apply-filters-button");
   const searchTopicInput = document.getElementById("search-topic-input");
   const searchVerifiedOnly = document.getElementById("search-verified-only");
 
@@ -564,26 +564,37 @@ document.addEventListener("DOMContentLoaded", async () => {
     ).toFixed(2)}`;
   });
 
-  applyFiltersButton.addEventListener("click", () => {
+  const applyFilters = () => {
     const subject = searchTopicInput.value;
     const verified = searchVerifiedOnly.checked;
     const maxPrice = priceRangeInput.value;
     fetchMentors(subject, verified, maxPrice);
-  });
+  };
 
   document
-    .getElementById("home-search-button")
-    .addEventListener("click", () => {
-      const subject = document.getElementById("home-search-input").value;
-      document.getElementById("search-topic-input").value = subject;
-      fetchMentors(subject, false, 300);
-      switchPage("page-search");
-    });
+    .getElementById("apply-filters-button")
+    .addEventListener("click", applyFilters);
+  document
+    .getElementById("apply-filters-button-sidebar")
+    .addEventListener("click", applyFilters);
+
+  // A busca da home agora só leva para a página de busca, pois o campo de busca da home foi removido na nova versão (Imagem 1).
+  // Mantemos esta lógica comentada ou adaptada se a versão de busca for usada.
+  // const homeSearchButton = document.getElementById("home-search-button");
+  // if(homeSearchButton) {
+  //   homeSearchButton.addEventListener("click", () => {
+  //     const subject = document.getElementById("home-search-input").value;
+  //     document.getElementById("search-topic-input").value = subject;
+  //     fetchMentors(subject, false, 300);
+  //     switchPage("page-search");
+  //   });
+  // }
+
 
   // --- Redirecionamento de Card/Botão de Perfil ---
   document.addEventListener("click", (e) => {
     const target = e.target;
-    const card = target.closest(".card-shadcn[data-mentor-id]");
+    const card = target.closest(".mentorlink-card");
     const button = target.closest("button[data-mentor-id]");
 
     let mentorId = null;
@@ -638,7 +649,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     switchPage("page-history");
   });
 
-  // --- Inicialização da Home (Mentores em Destaque) ---
+  // --- Inicialização da Home (Removido Mentores em Destaque da Home para aderir ao design da imagem 1) ---
+  /*
   try {
     const response = await fetch(`${API_BASE_URL}/mentors`);
     if (response.ok) {
@@ -656,6 +668,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     console.error("Erro ao carregar mentores em destaque:", error);
     showApiError("home-error-container");
   }
+  */
+
+  // Limpando o contêiner de featured (apenas para garantir)
+  const featuredContainer = document.querySelector(".mentor-list-featured");
+  if (featuredContainer) featuredContainer.innerHTML = "";
 
   switchPage("page-home");
 });
